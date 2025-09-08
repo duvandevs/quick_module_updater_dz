@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        
+        <!-- Cron Job para verificar actualizaciones -->
+        <record id="ir_cron_check_module_updates" model="ir.cron">
+            <field name="name">Quick Module Updater DZ: Verificar Actualizaciones</field>
+            <field name="model_id" ref="model_module_update_log"/>
+            <field name="state">code</field>
+            <field name="code">
+# Verificar actualizaciones disponibles
+Module = env['ir.module.module'].sudo()
+Module.update_list()
+
+# Contar módulos con actualizaciones
+updates_count = Module.search_count([
+    ('state', '=', 'installed'),
+    ('latest_version', '!=', False),
+])
+
+# Log si hay actualizaciones
+if updates_count > 0:
+    _logger.info(f"Quick Module Updater DZ: {updates_count} actualizaciones disponibles")
+            </field>
+            <field name="interval_number">6</field>
+            <field name="interval_type">hours</field>
+            <field name="numbercall">-1</field>
+            <field name="doall" eval="False"/>
+            <field name="active" eval="True"/>
+        </record>
+        
+    </data>
+</odoo>

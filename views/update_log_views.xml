@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        
+        <!-- Tree View -->
+        <record id="view_module_update_log_tree" model="ir.ui.view">
+            <field name="name">module.update.log.tree</field>
+            <field name="model">module.update.log</field>
+            <field name="arch" type="xml">
+                <tree string="Historial de Actualizaciones" default_order="create_date desc">
+                    <field name="create_date" string="Fecha"/>
+                    <field name="module_name"/>
+                    <field name="module_technical_name"/>
+                    <field name="version_before"/>
+                    <field name="version_after"/>
+                    <field name="state" widget="badge" decoration-success="state=='success'" decoration-danger="state=='error'" decoration-warning="state=='in_progress'"/>
+                    <field name="user_id"/>
+                    <field name="duration" widget="float_time"/>
+                </tree>
+            </field>
+        </record>
+        
+        <!-- Form View -->
+        <record id="view_module_update_log_form" model="ir.ui.view">
+            <field name="name">module.update.log.form</field>
+            <field name="model">module.update.log</field>
+            <field name="arch" type="xml">
+                <form string="Registro de Actualización">
+                    <sheet>
+                        <widget name="web_ribbon" title="Exitoso" bg_color="bg-success" invisible="state != 'success'"/>
+                        <widget name="web_ribbon" title="Error" bg_color="bg-danger" invisible="state != 'error'"/>
+                        <widget name="web_ribbon" title="En Progreso" bg_color="bg-warning" invisible="state != 'in_progress'"/>
+                        
+                        <group>
+                            <group string="Información del Módulo">
+                                <field name="module_name"/>
+                                <field name="module_technical_name"/>
+                                <field name="version_before"/>
+                                <field name="version_after"/>
+                            </group>
+                            <group string="Detalles de Actualización">
+                                <field name="create_date" string="Fecha de Actualización"/>
+                                <field name="user_id"/>
+                                <field name="state"/>
+                                <field name="duration" widget="float_time"/>
+                            </group>
+                        </group>
+                        
+                        <group string="Información Adicional" invisible="state == 'in_progress'">
+                            <field name="dependencies_updated" invisible="not dependencies_updated"/>
+                            <field name="error_message" invisible="state != 'error'"/>
+                        </group>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+        
+        <!-- Search View -->
+        <record id="view_module_update_log_search" model="ir.ui.view">
+            <field name="name">module.update.log.search</field>
+            <field name="model">module.update.log</field>
+            <field name="arch" type="xml">
+                <search string="Buscar Actualizaciones">
+                    <field name="module_name"/>
+                    <field name="module_technical_name"/>
+                    <field name="user_id"/>
+                    
+                    <filter string="Exitosas" name="success" domain="[('state', '=', 'success')]"/>
+                    <filter string="Con Errores" name="error" domain="[('state', '=', 'error')]"/>
+                    <filter string="En Progreso" name="in_progress" domain="[('state', '=', 'in_progress')]"/>
+                    
+                    <separator/>
+                    
+                    <filter string="Hoy" name="today" domain="[('create_date', '>=', datetime.datetime.now().replace(hour=0, minute=0, second=0))]"/>
+                    <filter string="Esta Semana" name="this_week" domain="[('create_date', '>=', (datetime.datetime.now() - datetime.timedelta(days=7)).strftime('%Y-%m-%d'))]"/>
+                    <filter string="Este Mes" name="this_month" domain="[('create_date', '>=', (datetime.datetime.now().replace(day=1)).strftime('%Y-%m-%d'))]"/>
+                    
+                    <group expand="0" string="Agrupar Por">
+                        <filter string="Estado" name="group_state" context="{'group_by': 'state'}"/>
+                        <filter string="Usuario" name="group_user" context="{'group_by': 'user_id'}"/>
+                        <filter string="Módulo" name="group_module" context="{'group_by': 'module_name'}"/>
+                        <filter string="Fecha" name="group_date" context="{'group_by': 'create_date:day'}"/>
+                    </group>
+                </search>
+            </field>
+        </record>
+        
+        <!-- Action -->
+        <record id="action_module_update_log" model="ir.actions.act_window">
+            <field name="name">Historial de Actualizaciones</field>
+            <field name="res_model">module.update.log</field>
+            <field name="view_mode">tree,form</field>
+            <field name="search_view_id" ref="view_module_update_log_search"/>
+            <field name="help" type="html">
+                <p class="o_view_nocontent_smiling_face">
+                    No hay actualizaciones registradas
+                </p>
+                <p>
+                    Aquí se mostrarán todas las actualizaciones de módulos realizadas mediante el Quick Module Updater DZ.
+                </p>
+            </field>
+        </record>
+        
+        <!-- Menu -->
+        <menuitem id="menu_module_update_log"
+                  name="Historial de Actualizaciones"
+                  parent="base.menu_management"
+                  action="action_module_update_log"
+                  sequence="100"
+                  groups="base.group_system"/>
+        
+    </data>
+</odoo>

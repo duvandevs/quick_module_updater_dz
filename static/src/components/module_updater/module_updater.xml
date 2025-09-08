@@ -1,0 +1,200 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+
+    <t t-name="quick_module_updater_dz.ModuleUpdaterWidget">
+        <!-- Aseguramos clase o_systray_item para heredar alineación base -->
+        <div class="o_module_updater_systray o_systray_item dropdown">
+            <!-- Botón sin clase 'btn' para evitar estilos de Bootstrap -->
+            <button class="o_module_updater_toggle"
+                    type="button"
+                    data-bs-toggle="dropdown"
+                    aria-expanded="false"
+                    title="Quick Module Updater DZ">
+                <img src="/quick_module_updater_dz/static/description/icon_menu.png"
+                     class="o_module_updater_icon_img"
+                     alt="Update"/>
+            </button>
+
+            <!-- Dropdown -->
+            <div class="dropdown-menu dropdown-menu-end o_module_updater_dropdown p-3">
+                <!-- Header sin círculo/ícono de fondo -->
+                <div class="o_module_updater_header mb-3">
+                    <div class="d-flex align-items-center justify-content-between">
+                        <div class="d-flex align-items-center">
+                            <!-- Eliminado: logo circular/azul
+                            <div class="o_module_updater_logo me-2">
+                                <i class="fa fa-sync-alt"/>
+                            </div>
+                            -->
+                            <div>
+                                <h6 class="mb-0 fw-bold">Quick Updater DZ</h6>
+                                <small class="text-muted">Actualización de módulos</small>
+                            </div>
+                        </div>
+                        <div t-if="state.favoriteIds.length > 0" class="text-end">
+                            <span class="badge bg-warning">
+                                <i class="fa fa-star"/> <t t-esc="state.favoriteIds.length"/>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Search Input -->
+                <div class="mb-3">
+                    <div class="input-group o_module_updater_search">
+                        <span class="input-group-text">
+                            <i class="fa fa-search"/>
+                        </span>
+                        <input type="text"
+                               class="form-control"
+                               placeholder="Buscar módulos..."
+                               t-att-value="state.searchTerm"
+                               t-on-input="onSearchInput"
+                               t-on-keydown="onKeyDown"
+                               t-ref="searchInput"/>
+                    </div>
+                    <small class="text-muted d-block mt-1">
+                        <i class="fa fa-info-circle"/> Escribe para buscar o deja vacío para ver favoritos
+                    </small>
+                </div>
+
+                <!-- Loading -->
+                <div t-if="state.isLoading" class="text-center py-4">
+                    <div class="o_module_updater_loading">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Cargando...</span>
+                        </div>
+                        <div class="mt-2 text-muted">Cargando módulos...</div>
+                    </div>
+                </div>
+
+                <!-- Lista de Módulos -->
+                <div t-if="!state.isLoading and state.allModules.length > 0" class="o_module_list_container">
+
+                    <!-- Favoritos -->
+                    <div t-if="!state.searchTerm and favoriteModules.length > 0" class="mb-3">
+                        <div class="d-flex align-items-center mb-2">
+                            <i class="fa fa-star text-warning me-1"/>
+                            <small class="text-uppercase fw-bold text-muted">Favoritos</small>
+                        </div>
+                        <div class="o_module_favorites_section">
+                            <div t-foreach="favoriteModules"
+                                 t-as="module"
+                                 t-key="module.id"
+                                 class="o_module_result_item favorite">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div class="flex-grow-1 me-2">
+                                        <div class="fw-bold text-truncate">
+                                            <a href="#"
+                                               t-on-click.prevent="() => toggleFavorite(module.id)"
+                                               class="favorite-star me-1"
+                                               title="Quitar de favoritos">
+                                                <i class="fa fa-star text-warning"/>
+                                            </a>
+                                            <t t-esc="module.display_name"/>
+                                        </div>
+                                        <div class="small text-muted mt-1">
+                                            <span class="me-2">
+                                                <i class="fa fa-code"/> <t t-esc="module.name"/>
+                                            </span>
+                                            <span class="badge bg-secondary">
+                                                v<t t-esc="module.version"/>
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <button class="btn btn-primary btn-sm o_module_update_btn"
+                                            t-on-click="() => updateModule(module.id, module.display_name)"
+                                            t-att-disabled="state.isLoading"
+                                            title="Actualizar este módulo">
+                                        <i class="fa fa-sync-alt"/> Actualizar
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Resultados -->
+                    <div t-if="state.searchTerm and searchResultModules.length > 0">
+                        <div class="d-flex align-items-center mb-2">
+                            <i class="fa fa-search text-muted me-1"/>
+                            <small class="text-uppercase fw-bold text-muted">Resultados</small>
+                        </div>
+                        <div class="o_module_search_results">
+                            <div t-foreach="searchResultModules"
+                                 t-as="module"
+                                 t-key="module.id"
+                                 class="o_module_result_item"
+                                 t-att-class="module.is_favorite ? 'favorite' : ''">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div class="flex-grow-1 me-2">
+                                        <div class="fw-bold text-truncate">
+                                            <a href="#"
+                                               t-on-click.prevent="() => toggleFavorite(module.id)"
+                                               class="favorite-star me-1"
+                                               t-att-title="module.is_favorite ? 'Quitar de favoritos' : 'Agregar a favoritos'">
+                                                <i t-att-class="module.is_favorite ? 'fa fa-star text-warning' : 'fa fa-star-o text-muted'"/>
+                                            </a>
+                                            <t t-esc="module.display_name"/>
+                                        </div>
+                                        <div class="small text-muted mt-1">
+                                            <span class="me-2">
+                                                <i class="fa fa-code"/> <t t-esc="module.name"/>
+                                            </span>
+                                            <span class="badge bg-secondary">
+                                                v<t t-esc="module.version"/>
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <button class="btn btn-primary btn-sm o_module_update_btn"
+                                            t-on-click="() => updateModule(module.id, module.display_name)"
+                                            t-att-disabled="state.isLoading"
+                                            title="Actualizar este módulo">
+                                        <i class="fa fa-sync-alt"/> Actualizar
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- No Results -->
+                <div t-if="!state.isLoading and state.showNoResults and state.searchTerm"
+                     class="o_module_no_results">
+                    <div class="text-center py-3">
+                        <i class="fa fa-search text-muted mb-2" style="font-size: 32px;"/>
+                        <p class="text-muted mb-0">
+                            No se encontraron módulos con<br/>
+                            "<strong><t t-esc="state.searchTerm"/></strong>"
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Empty State -->
+                <div t-if="!state.isLoading and !state.searchTerm and state.allModules.length === 0"
+                     class="o_module_empty_state">
+                    <div class="text-center py-4">
+                        <div class="o_module_empty_icon mb-3">
+                            <i class="fa fa-star-o"/>
+                        </div>
+                        <p class="text-muted mb-0">
+                            No tienes módulos favoritos
+                        </p>
+                        <small class="text-muted mt-2 d-block">
+                            Busca módulos y márcalos como favoritos<br/>
+                            para acceso rápido
+                        </small>
+                    </div>
+                </div>
+
+                <!-- Footer tip -->
+                <div t-if="state.allModules.length === 1"
+                     class="o_module_footer_tip">
+                    <small class="text-success">
+                        <i class="fa fa-keyboard-o"/> Presiona <kbd>Enter</kbd> para actualizar
+                    </small>
+                </div>
+            </div>
+        </div>
+    </t>
+
+</templates>

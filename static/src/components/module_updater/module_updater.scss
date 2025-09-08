@@ -1,0 +1,194 @@
+/* ================================
+ * Quick Module Updater DZ — Styles
+ * Alineado exacto con el systray
+ * ================================ */
+
+.o_menu_systray {
+  /* Contenedor del widget en el systray */
+  .o_module_updater_systray {
+    /* hace que el item respete el alto de la barra y se alinee */
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 4px;
+
+    /* Botón limpio, sin estilos bootstrap */
+    .o_module_updater_toggle {
+      /* tamaño del “hitbox” como los demás íconos del systray */
+      width: 28px;
+      height: 28px;
+
+      background: transparent !important;
+      border: none !important;
+      padding: 0 !important;
+      margin: 0;
+      line-height: 1;
+      box-shadow: none !important;
+      border-radius: 0 !important;
+
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      vertical-align: middle;
+      cursor: pointer;
+
+      /* quitar cualquier pseudo brillo previo */
+      &::before { content: none !important; }
+
+      /* sin efectos al hover/focus/active para no “mover” el icono */
+      &:hover,
+      &:focus,
+      &:active {
+        background: transparent !important;
+        transform: none !important;
+        box-shadow: none !important;
+        outline: none;
+      }
+    }
+
+    /* La imagen del ícono en sí */
+    .o_module_updater_icon_img {
+      width: 18px;     /* similar a otros iconos del systray */
+      height: 18px;
+      object-fit: contain;
+      display: block;
+      background: none !important;
+      border-radius: 0 !important;
+      filter: none;    /* usa el color del PNG tal cual */
+      transition: none;
+    }
+
+    /* Si existiese texto, lo ocultamos */
+    .o_module_updater_text { display: none !important; }
+
+    /* ---------- Dropdown ---------- */
+    .o_module_updater_dropdown {
+      min-width: 420px;
+      border-radius: 12px;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+      border: none;
+    }
+
+    .o_module_updater_header {
+      padding-bottom: 12px;
+      border-bottom: 2px solid #e0e0e0;
+    }
+
+    /* Elimina logo circular/azul del header */
+    .o_module_updater_logo { display: none !important; }
+
+    /* Buscador */
+    .o_module_updater_search .input-group-text {
+      background: #f8f9fa;
+      border-right: none;
+      border-color: #e0e0e0;
+    }
+    .o_module_updater_search .form-control {
+      border-left: none;
+      border-color: #e0e0e0;
+      padding: 10px;
+    }
+    .o_module_updater_search .form-control:focus {
+      border-color: #00d4ff;
+      box-shadow: 0 0 0 3px rgba(0, 212, 255, 0.1);
+    }
+
+    /* Listas */
+    .o_module_list_container { max-height: 400px; overflow-y: auto; }
+    .o_module_search_results { max-height: 320px; overflow-y: auto; }
+
+    .o_module_result_item {
+      padding: 10px;
+      margin-bottom: 8px;
+      background: #f8f9fa;
+      border-radius: 8px;
+      transition: all 0.2s ease;
+      border: 1px solid transparent;
+    }
+    .o_module_result_item:hover {
+      background: #e8f4ff;
+      transform: translateX(4px);
+      border-color: #00d4ff;
+    }
+
+    .o_module_favorites_section {
+      border: 2px solid #ffc107;
+      border-radius: 8px;
+      padding: 8px;
+      background: rgba(255, 193, 7, 0.05);
+    }
+    .o_module_result_item.favorite {
+      background: linear-gradient(to right, #fffbf0 0%, #fff9e6 100%);
+      border-left: 3px solid #ffc107;
+    }
+    .o_module_result_item.favorite:hover {
+      background: linear-gradient(to right, #fff9e6 0%, #fff5d6 100%);
+    }
+
+    .favorite-star {
+      text-decoration: none;
+      transition: transform 0.2s ease;
+      display: inline-block;
+    }
+    .favorite-star:hover { transform: scale(1.3) rotate(72deg); }
+
+    .o_module_update_btn {
+      background: linear-gradient(135deg, #00d4ff 0%, #0099cc 100%);
+      border: none;
+      padding: 5px 12px;
+      transition: all 0.2s ease;
+      font-size: 13px;
+      color: #fff;
+    }
+    .o_module_update_btn:hover {
+      transform: scale(1.05);
+      box-shadow: 0 4px 8px rgba(0, 153, 204, 0.3);
+    }
+    .o_module_update_btn:active { transform: scale(0.98); }
+    .o_module_update_btn i { font-size: 12px; margin-right: 4px; }
+
+    .o_module_updater_loading .spinner-border {
+      width: 2rem;
+      height: 2rem;
+      border-width: 3px;
+      border-color: #00d4ff;
+      border-right-color: transparent;
+    }
+
+    .o_module_empty_state .o_module_empty_icon {
+      width: 60px;
+      height: 60px;
+      background: #f0f2f5;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto;
+    }
+    .o_module_empty_state .o_module_empty_icon i {
+      font-size: 24px;
+      color: #888;
+    }
+
+    .o_module_no_results {
+      padding: 20px;
+      background: #fef5e7;
+      border-radius: 8px;
+    }
+    .o_module_no_results i { color: #f39c12; }
+
+    .o_module_footer_tip {
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px solid #e0e0e0;
+      text-align: center;
+    }
+    .o_module_footer_tip kbd {
+      background: #333;
+      color: white;
+      padding: 2px 6px;
+      border-radius: 3px;
+      font-size: 11px;
+    }
+  }
+}
