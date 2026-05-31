@@ -1,6 +1,6 @@
 /** @odoo-module **/
 
-import { Component, useState, onWillStart, onMounted, useRef } from "@odoo/owl";
+import { Component, useState, onWillStart, onMounted, onWillUnmount, useRef } from "@odoo/owl";
 import { registry } from "@web/core/registry";
 import { useService } from "@web/core/utils/hooks";
 import { _t } from "@web/core/l10n/translation";
@@ -12,7 +12,6 @@ export class ModuleUpdaterWidget extends Component {
     setup() {
         this.rpc = useService("rpc");
         this.notification = useService("notification");
-        this.action = useService("action");
         this.user = useService("user");
         
         this.searchInputRef = useRef("searchInput");
@@ -22,8 +21,9 @@ export class ModuleUpdaterWidget extends Component {
             allModules: [], // Todos los módulos para mostrar
             favoriteIds: [], // IDs de favoritos guardados en localStorage
             isLoading: false,
-            dropdownOpen: false,
+            isAdmin: false,
             showNoResults: false,
+            showMinSearchHint: false,
             favoritesLoaded: false, // Flag para saber si ya cargamos los favoritos
         });
         
@@ -31,34 +31,45 @@ export class ModuleUpdaterWidget extends Component {
         this.updateModule = this.updateModule.bind(this);
         this.onSearchInput = this.onSearchInput.bind(this);
         this.onKeyDown = this.onKeyDown.bind(this);
-        this.toggleDropdown = this.toggleDropdown.bind(this);
         this.toggleFavorite = this.toggleFavorite.bind(this);
         this.onDropdownOpen = this.onDropdownOpen.bind(this);
         
         onWillStart(async () => {
             try {
-                this.isAdmin = await this.user.hasGroup("base.group_system");
+                this.state.isAdmin = await this.user.hasGroup("base.group_system");
                 // Cargar IDs de favoritos desde localStorage
-                this.loadFavoriteIds();
+                if (this.state.isAdmin) {
+                    this.loadFavoriteIds();
+                }
             } catch (error) {
                 console.error("Error checking admin rights:", error);
-                this.isAdmin = false;
+                this.state.isAdmin = false;
             }
         });
         
         onMounted(() => {
             const dropdownElement = this.searchInputRef.el?.closest('.dropdown');
             if (dropdownElement) {
+                this.dropdownElement = dropdownElement;
                 dropdownElement.addEventListener('shown.bs.dropdown', this.onDropdownOpen);
+            }
+        });
+
+        onWillUnmount(() => {
+            if (this.dropdownElement) {
+                this.dropdownElement.removeEventListener('shown.bs.dropdown', this.onDropdownOpen);
             }
         });
     }
     
     onDropdownOpen() {
-        // Cargar módulos favoritos cuando se abre el dropdown
-        if (!this.state.favoritesLoaded) {
-            this.loadFavoriteModules();
-        }
+        this.state.searchTerm = "";
+        this.state.allModules = [];
+        this.state.showNoResults = false;
+        this.state.showMinSearchHint = false;
+        this.state.favoritesLoaded = false;
+        this.loadFavoriteModules();
+
         // Focus automático
         setTimeout(() => {
             if (this.searchInputRef.el) {
@@ -126,16 +137,6 @@ export class ModuleUpdaterWidget extends Component {
         this.state.allModules = [...this.state.allModules];
     }
     
-    toggleDropdown() {
-        this.state.dropdownOpen = !this.state.dropdownOpen;
-        if (this.state.dropdownOpen) {
-            this.state.searchTerm = "";
-            this.state.allModules = [];
-            this.state.showNoResults = false;
-            this.state.favoritesLoaded = false;
-        }
-    }
-    
     async loadFavoriteModules() {
         if (this.state.favoriteIds.length === 0) {
             this.state.allModules = [];
@@ -187,13 +188,18 @@ export class ModuleUpdaterWidget extends Component {
             this.state.favoritesLoaded = false;
             await this.loadFavoriteModules();
             this.state.showNoResults = false;
+            this.state.showMinSearchHint = false;
             return;
         }
         
         if (searchValue.length < 2) {
+            this.state.allModules = [];
+            this.state.showNoResults = false;
+            this.state.showMinSearchHint = true;
             return;
         }
         
+        this.state.showMinSearchHint = false;
         await this.searchModules(searchValue);
     }
     

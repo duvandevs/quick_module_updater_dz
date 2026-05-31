@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 
-import json
 import time
 import logging
 from odoo import http, _
@@ -123,8 +122,11 @@ class ModuleUpdaterController(http.Controller):
             module = Module.browse(module_id)
             if not module.exists():
                 raise UserError(_('Módulo no encontrado.'))
+            if module.state != 'installed':
+                raise UserError(_('Solo se pueden actualizar módulos instalados.'))
             
             module_name = module.shortdesc or module.name
+            version_before = module.latest_version or module.installed_version
             
             # Crear registro de log si el modelo existe
             log = None
@@ -133,10 +135,10 @@ class ModuleUpdaterController(http.Controller):
                     log = UpdateLog.create_log(
                         module_name,
                         module.name,
-                        module.installed_version
+                        version_before
                     )
-                except:
-                    pass
+                except Exception:
+                    _logger.exception("No se pudo crear el log de actualización")
             
             try:
                 # Actualizar lista de módulos disponibles
@@ -144,6 +146,7 @@ class ModuleUpdaterController(http.Controller):
                 
                 # Ejecutar actualización inmediata
                 module.button_immediate_upgrade()
+                module = Module.browse(module.id)
                 
                 # Calcular duración
                 duration = time.time() - start_time
@@ -152,16 +155,16 @@ class ModuleUpdaterController(http.Controller):
                 if log:
                     try:
                         log.mark_success(
-                            module.latest_version or module.installed_version,
+                            module.installed_version or module.latest_version,
                             duration
                         )
-                    except:
-                        pass
+                    except Exception:
+                        _logger.exception("No se pudo marcar como exitoso el log de actualización")
                 
                 return {
                     'success': True,
                     'message': _('Módulo %s actualizado exitosamente.') % module_name,
-                    'version': module.latest_version or module.installed_version,
+                    'version': module.installed_version or module.latest_version,
                     'duration': duration
                 }
                 
@@ -171,8 +174,8 @@ class ModuleUpdaterController(http.Controller):
                     try:
                         duration = time.time() - start_time
                         log.mark_error(str(update_error), duration)
-                    except:
-                        pass
+                    except Exception:
+                        _logger.exception("No se pudo marcar como fallido el log de actualización")
                 raise
                 
         except AccessError as e:

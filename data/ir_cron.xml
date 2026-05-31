@@ -9,18 +9,11 @@
             <field name="state">code</field>
             <field name="code">
 # Verificar actualizaciones disponibles
-Module = env['ir.module.module'].sudo()
-Module.update_list()
-
-# Contar módulos con actualizaciones
-updates_count = Module.search_count([
-    ('state', '=', 'installed'),
-    ('latest_version', '!=', False),
-])
+updates_count = model.sudo().get_pending_updates_count(refresh=True)
 
 # Log si hay actualizaciones
 if updates_count > 0:
-    _logger.info(f"Quick Module Updater DZ: {updates_count} actualizaciones disponibles")
+    log("Quick Module Updater DZ: %s actualizaciones disponibles" % updates_count)
             </field>
             <field name="interval_number">6</field>
             <field name="interval_type">hours</field>
