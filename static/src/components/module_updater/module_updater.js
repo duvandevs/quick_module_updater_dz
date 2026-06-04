@@ -24,6 +24,8 @@ export class ModuleUpdaterWidget extends Component {
             isAdmin: false,
             showNoResults: false,
             showMinSearchHint: false,
+            updateError: null,
+            errorCopied: false,
             favoritesLoaded: false, // Flag para saber si ya cargamos los favoritos
         });
         
@@ -33,6 +35,8 @@ export class ModuleUpdaterWidget extends Component {
         this.onKeyDown = this.onKeyDown.bind(this);
         this.toggleFavorite = this.toggleFavorite.bind(this);
         this.onDropdownOpen = this.onDropdownOpen.bind(this);
+        this.copyUpdateError = this.copyUpdateError.bind(this);
+        this.clearUpdateError = this.clearUpdateError.bind(this);
         
         onWillStart(async () => {
             try {
@@ -67,6 +71,7 @@ export class ModuleUpdaterWidget extends Component {
         this.state.allModules = [];
         this.state.showNoResults = false;
         this.state.showMinSearchHint = false;
+        this.state.errorCopied = false;
         this.state.favoritesLoaded = false;
         this.loadFavoriteModules();
 
@@ -244,6 +249,8 @@ export class ModuleUpdaterWidget extends Component {
     
     async updateModule(moduleId, moduleName) {
         this.state.isLoading = true;
+        this.state.updateError = null;
+        this.state.errorCopied = false;
         
         try {
             const result = await this.rpc("/module_updater_dz/update_module", {
@@ -261,23 +268,78 @@ export class ModuleUpdaterWidget extends Component {
                     window.location.reload();
                 }, 2000);
             } else {
-                this.notification.add(
-                    _t(`Error al actualizar ${moduleName}: `) + (result.error || "Error desconocido"),
-                    {
-                        type: "danger",
-                        sticky: false,
-                    }
-                );
+                this.setUpdateError(moduleName, result);
+                this.notification.add(_t(`No se pudo actualizar ${moduleName}`), {
+                    type: "danger",
+                    sticky: false,
+                });
             }
         } catch (error) {
             console.error("Error updating module:", error);
-            this.notification.add(_t(`Error al actualizar el módulo ${moduleName}`), {
+            this.setUpdateError(moduleName, {
+                error: error.message || String(error),
+                error_type: error.name || "JavaScriptError",
+                error_details: error.stack || "",
+            });
+            this.notification.add(_t(`No se pudo actualizar ${moduleName}`), {
                 type: "danger",
                 sticky: false,
             });
         } finally {
             this.state.isLoading = false;
         }
+    }
+
+    setUpdateError(moduleName, result) {
+        const message = result.error || "Error desconocido";
+        this.state.updateError = {
+            moduleName: result.module_name || moduleName,
+            message,
+            type: result.error_type || "Error",
+            details: result.error_details || message,
+            timestamp: new Date().toLocaleString(),
+        };
+    }
+
+    get formattedUpdateError() {
+        const error = this.state.updateError;
+        if (!error) {
+            return "";
+        }
+
+        return [
+            `Modulo: ${error.moduleName}`,
+            `Tipo: ${error.type}`,
+            `Fecha: ${error.timestamp}`,
+            "",
+            "Mensaje:",
+            error.message,
+            "",
+            "Detalle:",
+            error.details,
+        ].join("\n");
+    }
+
+    async copyUpdateError() {
+        if (!this.state.updateError) {
+            return;
+        }
+
+        try {
+            await navigator.clipboard.writeText(this.formattedUpdateError);
+            this.state.errorCopied = true;
+        } catch (error) {
+            console.error("Error copying update error:", error);
+            this.notification.add(_t("No se pudo copiar el error"), {
+                type: "warning",
+                sticky: false,
+            });
+        }
+    }
+
+    clearUpdateError() {
+        this.state.updateError = null;
+        this.state.errorCopied = false;
     }
     
     onKeyDown(ev) {

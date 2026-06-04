@@ -28,11 +28,9 @@ Desarrollado por: DZ
     'depends': [
         'base',
         'web',
-        'mail',
     ],
     'data': [
         'security/ir.model.access.csv',
-        #'views/assets.xml',
         'views/update_log_views.xml',
         'data/ir_cron.xml',
     ],

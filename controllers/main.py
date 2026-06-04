@@ -2,6 +2,7 @@
 
 import time
 import logging
+import traceback
 from odoo import http, _
 from odoo.http import request
 from odoo.exceptions import AccessError, UserError
@@ -10,6 +11,19 @@ _logger = logging.getLogger(__name__)
 
 
 class ModuleUpdaterController(http.Controller):
+
+    def _error_response(self, error, module_name=None, include_traceback=False):
+        message = str(error)
+        response = {
+            'success': False,
+            'error': message,
+            'error_type': error.__class__.__name__,
+        }
+        if module_name:
+            response['module_name'] = module_name
+        if include_traceback:
+            response['error_details'] = traceback.format_exc()
+        return response
     
     @http.route('/module_updater_dz/search_module', type='json', auth='user')
     def search_module(self, search_term):
@@ -108,6 +122,7 @@ class ModuleUpdaterController(http.Controller):
     @http.route('/module_updater_dz/update_module', type='json', auth='user')
     def update_module(self, module_id):
         """Actualiza un módulo específico"""
+        module_name = None
         try:
             # Verificar permisos
             if not request.env.user.has_group('base.group_system'):
@@ -179,21 +194,12 @@ class ModuleUpdaterController(http.Controller):
                 raise
                 
         except AccessError as e:
-            return {
-                'success': False,
-                'error': str(e)
-            }
+            return self._error_response(e, module_name)
         except UserError as e:
-            return {
-                'success': False,
-                'error': str(e)
-            }
+            return self._error_response(e, module_name)
         except Exception as e:
-            _logger.error(f"Error actualizando módulo: {str(e)}")
-            return {
-                'success': False,
-                'error': _('Error al actualizar el módulo: %s') % str(e)
-            }
+            _logger.exception("Error actualizando módulo")
+            return self._error_response(e, module_name, include_traceback=True)
     
     @http.route('/module_updater_dz/get_modules', type='json', auth='user')
     def get_installed_modules(self):
